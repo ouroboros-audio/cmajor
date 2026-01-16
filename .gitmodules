@@ -1,6 +1,6 @@
 [submodule "3rdParty/choc"]
 	path = include/choc
-	url = git@github.com:Tracktion/choc.git
+	url = https://ouroboros-audio@github.com/ouroboros-audio/choc
 [submodule "3rdParty/boost/static_assert"]
 	path = 3rdParty/boost/static_assert
 	url = git@github.com:boostorg/static_assert.git
