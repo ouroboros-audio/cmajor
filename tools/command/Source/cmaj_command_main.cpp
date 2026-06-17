@@ -235,7 +235,7 @@ static choc::value::Value parseEngineArgs (choc::ArgumentList& args)
 //==============================================================================
 static bool isCommand (choc::ArgumentList& args, std::string_view name)
 {
-    if (args.indexOf (name) == 0)
+    if (args.size() != 0 && args[0] == name)
     {
         args.removeIndex (0);
         return true;
