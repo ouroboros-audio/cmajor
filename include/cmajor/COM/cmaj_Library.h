@@ -92,6 +92,8 @@ struct Library
    #if CMAJOR_DLL
     static constexpr bool isUsingDLL = true;
     using SharedLibraryPtr = std::shared_ptr<choc::file::DynamicLibrary>;
+    /// Initialises from a library opened by the client's native platform loader.
+    static bool initialise (SharedLibraryPtr library);
    #else
     static constexpr bool isUsingDLL = false;
     struct SharedLibraryPtr {};
@@ -149,15 +151,13 @@ inline Library::EntryPoints& Library::getEntryPoints()
 
 inline bool Library::initialise (std::string_view pathToDLL)
 {
-    auto& library = getSharedLibraryPtrRef();
-
-    if (library != nullptr)
+    if (getSharedLibraryPtrRef() != nullptr)
         return true;
 
     if (pathToDLL.empty())
         return false;
 
-    library = std::make_shared<choc::file::DynamicLibrary> (pathToDLL);
+    auto library = std::make_shared<choc::file::DynamicLibrary> (pathToDLL);
 
     if (library->handle == nullptr)
     {
@@ -175,7 +175,16 @@ inline bool Library::initialise (std::string_view pathToDLL)
         library = std::make_shared<choc::file::DynamicLibrary> (path + getDLLName());
     }
 
-    if (library->handle != nullptr)
+    return initialise (std::move (library));
+}
+
+inline bool Library::initialise (SharedLibraryPtr library)
+{
+    auto& shared = getSharedLibraryPtrRef();
+    if (shared != nullptr)
+        return true;
+
+    if (library != nullptr && library->handle != nullptr)
     {
         using GetEntryPointsFn = EntryPoints*(*)();
 
@@ -184,11 +193,13 @@ inline bool Library::initialise (std::string_view pathToDLL)
             entryPoints = fn();
 
             if (entryPoints != nullptr)
+            {
+                shared = std::move (library);
                 return true;
+            }
         }
     }
 
-    library.reset();
     return false;
 }
 
